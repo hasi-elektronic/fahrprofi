@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import {
-  View, Text, TouchableOpacity, StyleSheet,
-  StatusBar,
+  View, Text, TouchableOpacity, StatusBar,
 } from 'react-native';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
@@ -24,11 +23,6 @@ import FragenlisteScreen    from './app/modals/FragenlisteScreen';
 import { SAMPLE_QUESTIONS } from './data/questions';
 
 type TabId = 'home' | 'learn' | 'exam' | 'stats' | 'settings';
-type ModalId =
-  | 'MultipleChoice' | 'Flashcard' | 'Swipe' | 'SpeedRound'
-  | 'MemoryMatch' | 'ExamSession' | 'Topic' | 'Pruefungsampel' | 'Fragenliste';
-
-interface ModalState { id: ModalId; params?: any; }
 
 const TABS: { id: TabId; icon: string; label: string }[] = [
   { id: 'home',     icon: '⌂', label: 'Start'      },
@@ -38,7 +32,7 @@ const TABS: { id: TabId; icon: string; label: string }[] = [
   { id: 'settings', icon: '⚙', label: 'Einstellung'},
 ];
 
-const MODAL_TITLES: Partial<Record<ModalId, string>> = {
+const MODAL_TITLES: Record<string, string> = {
   MultipleChoice: 'Multiple Choice',
   Flashcard:      'Karteikarten',
   Swipe:          'Swipe & Learn',
@@ -50,14 +44,11 @@ const MODAL_TITLES: Partial<Record<ModalId, string>> = {
   Fragenliste:    'Fragenliste 📋',
 };
 
-// ─── TOP NAV — always rendered ─────────────────────────────────────────────
-function TopNav({
-  tab, setTab, modal, onBack,
-}: {
+function TopBar({ tab, setTab, modalTitle, onBack }: {
   tab: TabId;
   setTab: (t: TabId) => void;
-  modal: ModalState | undefined;
-  onBack: () => void;
+  modalTitle?: string;
+  onBack?: () => void;
 }) {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
@@ -75,124 +66,94 @@ function TopNav({
       elevation: 4,
       zIndex: 100,
     }}>
-      {/* Row 1 — logo + tabs (always visible) */}
-      <View style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 6,
-        paddingTop: 6,
-        paddingBottom: 2,
-      }}>
-        <TouchableOpacity
-          onPress={() => { setTab('home'); }}
-          style={{ paddingHorizontal: 10, paddingVertical: 6 }}
-          activeOpacity={0.7}
-        >
-          <Text style={{ fontSize: 16, fontWeight: '800', color: colors.primary, letterSpacing: -0.3 }}>
-            FahrProfi
-          </Text>
+      {/* Tab row — always visible */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6, paddingTop: 6, paddingBottom: 2 }}>
+        <TouchableOpacity onPress={() => setTab('home')} style={{ paddingHorizontal: 10, paddingVertical: 6 }} activeOpacity={0.7}>
+          <Text style={{ fontSize: 15, fontWeight: '800', color: colors.primary, letterSpacing: -0.3 }}>FahrProfi</Text>
         </TouchableOpacity>
-
-        <View style={{ width: 1, height: 20, backgroundColor: colors.border, marginHorizontal: 4 }} />
-
+        <View style={{ width: 1, height: 18, backgroundColor: colors.border, marginHorizontal: 4 }} />
         {TABS.map((t) => {
-          const isActive = tab === t.id && !modal;
+          const active = tab === t.id && !modalTitle;
           return (
             <TouchableOpacity
               key={t.id}
-              style={{
-                flex: 1, alignItems: 'center', paddingVertical: 7,
-                paddingHorizontal: 2, borderRadius: 10,
-                backgroundColor: isActive ? colors.primaryLight : 'transparent',
-              }}
               onPress={() => { setTab(t.id); }}
+              style={{
+                flex: 1, alignItems: 'center', paddingVertical: 7, paddingHorizontal: 2,
+                borderRadius: 10,
+                backgroundColor: active ? colors.primaryLight : 'transparent',
+              }}
               activeOpacity={0.7}
             >
-              <Text style={{ fontSize: 16, opacity: isActive ? 1 : 0.35 }}>{t.icon}</Text>
-              <Text style={{
-                fontSize: 9, fontWeight: '700',
-                color: isActive ? colors.primary : colors.textMuted,
-                marginTop: 1, letterSpacing: 0.1,
-              }}>{t.label}</Text>
+              <Text style={{ fontSize: 16, opacity: active ? 1 : 0.35 }}>{t.icon}</Text>
+              <Text style={{ fontSize: 9, fontWeight: '700', color: active ? colors.primary : colors.textMuted, marginTop: 1 }}>
+                {t.label}
+              </Text>
             </TouchableOpacity>
           );
         })}
       </View>
 
-      {/* Row 2 — modal breadcrumb (only when in modal) */}
-      {modal && (
+      {/* Breadcrumb — only when modal open */}
+      {modalTitle && onBack && (
         <View style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          paddingHorizontal: 14,
-          paddingVertical: 8,
-          borderTopWidth: 1,
-          borderTopColor: colors.border,
+          flexDirection: 'row', alignItems: 'center',
+          paddingHorizontal: 14, paddingVertical: 8,
+          borderTopWidth: 1, borderTopColor: colors.border,
           backgroundColor: colors.elevated,
         }}>
-          <TouchableOpacity
-            onPress={onBack}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}
-            activeOpacity={0.7}
-          >
+          <TouchableOpacity onPress={onBack} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }} activeOpacity={0.7}>
             <Text style={{ fontSize: 18, color: colors.primary, lineHeight: 20 }}>←</Text>
             <Text style={{ fontSize: 13, fontWeight: '600', color: colors.primary }}>Zurück</Text>
           </TouchableOpacity>
           <View style={{ width: 1, height: 16, backgroundColor: colors.border, marginHorizontal: 10 }} />
-          <Text style={{ fontSize: 13, fontWeight: '600', color: colors.text }}>
-            {MODAL_TITLES[modal.id] || modal.id}
-          </Text>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: colors.text }}>{modalTitle}</Text>
         </View>
       )}
     </View>
   );
 }
 
-// ─── APP CONTENT ────────────────────────────────────────────────────────────
 function AppContent() {
   const { colors } = useTheme();
   const [tab, setTab] = useState<TabId>('home');
-  const [modalStack, setModalStack] = useState<ModalState[]>([]);
+  const [stack, setStack] = useState<{ id: string; params?: any }[]>([]);
 
-  const currentModal = modalStack[modalStack.length - 1];
+  const current = stack[stack.length - 1];
 
-  const navigate = (id: ModalId, params?: any) =>
-    setModalStack((s) => [...s, { id, params }]);
+  const push = (id: string, params?: any) => setStack(s => [...s, { id, params }]);
+  const pop  = () => setStack(s => s.slice(0, -1));
+  const goHome = () => { setStack([]); setTab('home'); };
 
-  const goBack = () => setModalStack((s) => s.slice(0, -1));
+  const nav = { navigate: push, goBack: pop };
 
-  const handleSetTab = (t: TabId) => {
-    setModalStack([]);
-    setTab(t);
-  };
+  const handleSetTab = (t: TabId) => { setStack([]); setTab(t); };
 
-  const navigation = { navigate: (s: string, p?: any) => navigate(s as ModalId, p), goBack };
-
-  const renderTab = () => {
-    const props: any = { navigation, route: {} };
-    switch (tab) {
-      case 'home':     return <HomeScreen {...props} />;
-      case 'learn':    return <LearnScreen {...props} />;
-      case 'exam':     return <ExamScreen {...props} />;
-      case 'stats':    return <StatsScreen {...props} />;
-      case 'settings': return <SettingsScreen {...props} />;
+  const renderModal = (m: { id: string; params?: any }) => {
+    const n = { navigate: push, goBack: pop };
+    const r = { params: m.params || {} };
+    switch (m.id) {
+      case 'MultipleChoice': return <MultipleChoiceScreen navigation={n} route={r} />;
+      case 'Flashcard':      return <FlashcardScreen navigation={n} route={{ params: { questions: m.params?.questions || SAMPLE_QUESTIONS } }} />;
+      case 'Swipe':          return <SwipeScreen navigation={n} route={{ params: { questions: m.params?.questions || SAMPLE_QUESTIONS } }} />;
+      case 'SpeedRound':     return <SpeedRoundScreen navigation={n} />;
+      case 'MemoryMatch':    return <MemoryMatchScreen navigation={n} />;
+      case 'ExamSession':    return <ExamSessionScreen navigation={n} />;
+      case 'Topic':          return <TopicScreen navigation={n} route={r} />;
+      case 'Pruefungsampel': return <PruefungsampelScreen navigation={n} />;
+      case 'Fragenliste':    return <FragenlisteScreen navigation={n} />;
+      default: return null;
     }
   };
 
-  const renderModal = (modal: ModalState) => {
-    const nav = { navigate: (s: string, p?: any) => navigate(s as ModalId, p), goBack };
-    const route = { params: modal.params || {} };
-    switch (modal.id) {
-      case 'MultipleChoice': return <MultipleChoiceScreen navigation={nav} route={route} />;
-      case 'Flashcard':      return <FlashcardScreen navigation={nav} route={{ params: modal.params || { questions: SAMPLE_QUESTIONS } }} />;
-      case 'Swipe':          return <SwipeScreen navigation={nav} route={{ params: modal.params || { questions: SAMPLE_QUESTIONS } }} />;
-      case 'SpeedRound':     return <SpeedRoundScreen navigation={nav} />;
-      case 'MemoryMatch':    return <MemoryMatchScreen navigation={nav} />;
-      case 'ExamSession':    return <ExamSessionScreen navigation={nav} />;
-      case 'Topic':          return <TopicScreen navigation={nav} route={route} />;
-      case 'Pruefungsampel': return <PruefungsampelScreen navigation={nav} />;
-      case 'Fragenliste':    return <FragenlisteScreen navigation={nav} />;
-      default:               return null;
+  const renderTab = () => {
+    const p: any = { navigation: nav, route: {} };
+    switch (tab) {
+      case 'home':     return <HomeScreen {...p} />;
+      case 'learn':    return <LearnScreen {...p} />;
+      case 'exam':     return <ExamScreen {...p} />;
+      case 'stats':    return <StatsScreen {...p} />;
+      case 'settings': return <SettingsScreen {...p} />;
     }
   };
 
@@ -200,17 +161,17 @@ function AppContent() {
     <View style={{ flex: 1, backgroundColor: colors.background }}>
       <StatusBar barStyle="dark-content" backgroundColor={colors.surface} />
 
-      {/* ← TOP NAV: ALWAYS VISIBLE, EVERY PAGE */}
-      <TopNav
+      {/* TOP BAR — ALWAYS VISIBLE */}
+      <TopBar
         tab={tab}
         setTab={handleSetTab}
-        modal={currentModal}
-        onBack={goBack}
+        modalTitle={current ? MODAL_TITLES[current.id] : undefined}
+        onBack={current ? pop : undefined}
       />
 
       {/* Content */}
       <View style={{ flex: 1 }}>
-        {currentModal ? renderModal(currentModal) : renderTab()}
+        {current ? renderModal(current) : renderTab()}
       </View>
     </View>
   );
