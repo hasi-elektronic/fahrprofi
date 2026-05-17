@@ -18,6 +18,9 @@ import FlashcardScreen from './app/modals/FlashcardScreen';
 import SwipeScreen from './app/modals/SwipeScreen';
 import TopicScreen from './app/modals/TopicScreen';
 import ExamSessionScreen from './app/modals/ExamSessionScreen';
+import MultipleChoiceScreen from './app/modals/MultipleChoiceScreen';
+import SpeedRoundScreen from './app/modals/SpeedRoundScreen';
+import MemoryMatchScreen from './app/modals/MemoryMatchScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -28,20 +31,12 @@ function MainTabs() {
     <Tab.Navigator
       screenOptions={({ route }) => ({
         headerShown: false,
-        tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.border,
-          paddingBottom: 8,
-          paddingTop: 6,
-          height: 70,
-        },
+        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border, paddingBottom: 8, paddingTop: 6, height: 70 },
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.textMuted,
         tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginTop: 2 },
         tabBarIcon: ({ focused }) => {
-          const icons: { [key: string]: string } = {
-            Home: '🏠', Learn: '📚', Exam: '📝', Stats: '📊', Settings: '⚙️',
-          };
+          const icons: { [key: string]: string } = { Home: '🏠', Learn: '📚', Exam: '📝', Stats: '📊', Settings: '⚙️' };
           return <Text style={{ fontSize: focused ? 22 : 18, opacity: focused ? 1 : 0.6 }}>{icons[route.name]}</Text>;
         },
       })}
@@ -66,6 +61,9 @@ function AppNavigator() {
         <Stack.Screen name="Swipe" component={SwipeScreen} options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="Topic" component={TopicScreen} />
         <Stack.Screen name="ExamSession" component={ExamSessionScreen} options={{ animation: 'fade' }} />
+        <Stack.Screen name="MultipleChoice" component={MultipleChoiceScreen} options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="SpeedRound" component={SpeedRoundScreen} options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="MemoryMatch" component={MemoryMatchScreen} options={{ animation: 'slide_from_bottom' }} />
       </Stack.Navigator>
     </NavigationContainer>
   );
