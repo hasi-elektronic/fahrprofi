@@ -1,21 +1,22 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, ScrollView,
-  StyleSheet, Dimensions,
+  StyleSheet, ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useLanguage } from '../../contexts/LanguageContext';
-import { SAMPLE_QUESTIONS } from '../../data/questions';
-import { selectExamQuestions, calculateExamScore } from '../../utils/spaced-repetition';
+import { useExamQuestions } from '../../hooks/useQuestions';
+import { calculateExamScore } from '../../utils/spaced-repetition';
+import { Dimensions } from 'react-native';
 
 const { width } = Dimensions.get('window');
 
 export default function ExamSessionScreen({ navigation }: any) {
   const { colors } = useTheme();
   const { t } = useLanguage();
+  const { questions, loading } = useExamQuestions('B');
 
-  const questions = useMemo(() => selectExamQuestions(SAMPLE_QUESTIONS, Math.min(30, SAMPLE_QUESTIONS.length)), []);
   const [current, setCurrent] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<{ [qIdx: number]: number[] }>({});
   const [finished, setFinished] = useState(false);
@@ -27,86 +28,59 @@ export default function ExamSessionScreen({ navigation }: any) {
   const toggleAnswer = (ansIdx: number) => {
     if (finished) return;
     const prev = selectedAnswers[current] || [];
-    const updated = prev.includes(ansIdx)
-      ? prev.filter((i) => i !== ansIdx)
-      : [...prev, ansIdx];
+    const updated = prev.includes(ansIdx) ? prev.filter(i => i !== ansIdx) : [...prev, ansIdx];
     setSelectedAnswers({ ...selectedAnswers, [current]: updated });
   };
 
   const finish = () => {
     const answers = questions.map((q, qi) => {
       const selected = selectedAnswers[qi] || [];
-      const correctIndices = q.answers.map((a, i) => a.correct ? i : -1).filter(i => i >= 0);
-      const isCorrect = correctIndices.length === selected.length &&
-        correctIndices.every(i => selected.includes(i));
+      const correctIdx = q.answers.map((a, i) => a.correct ? i : -1).filter(i => i >= 0);
+      const isCorrect = correctIdx.length === selected.length && correctIdx.every(i => selected.includes(i));
       return { questionId: q.id, correct: isCorrect, points: q.points };
     });
-    const score = calculateExamScore(answers);
-    setResults({ ...score, answers });
+    setResults({ ...calculateExamScore(answers), answers });
     setFinished(true);
   };
 
   const s = StyleSheet.create({
     container: { flex: 1, backgroundColor: colors.background },
-    header: {
-      padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border,
-      flexDirection: 'row', alignItems: 'center',
-    },
+    header: { padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border, flexDirection: 'row', alignItems: 'center' },
     closeBtn: { fontSize: 22, color: colors.primary, marginRight: 12 },
     headerInfo: { flex: 1 },
     headerTitle: { fontSize: 16, fontWeight: '700', color: colors.text },
     progressText: { fontSize: 13, color: colors.textSecondary, marginTop: 2 },
-    progressBar: { height: 3, backgroundColor: colors.border, marginTop: 8 },
+    progressBar: { height: 3, backgroundColor: colors.border },
     progressFill: { height: 3, backgroundColor: colors.primary },
     scroll: { padding: 20 },
     questionNum: { fontSize: 12, fontWeight: '700', color: colors.textMuted, letterSpacing: 1, marginBottom: 8 },
     questionText: { fontSize: 19, fontWeight: '700', color: colors.text, lineHeight: 27, marginBottom: 6 },
-    pointsBadge: {
-      alignSelf: 'flex-start', backgroundColor: colors.primary,
-      borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, marginBottom: 20,
-    },
-    answerBtn: {
-      flexDirection: 'row', alignItems: 'center',
-      backgroundColor: colors.card, borderRadius: 12,
-      borderWidth: 2, borderColor: colors.border,
-      padding: 14, marginBottom: 10,
-    },
-    answerSelected: { borderColor: colors.primary, backgroundColor: 'rgba(244,167,0,0.08)' },
-    answerCorrect: { borderColor: colors.success, backgroundColor: 'rgba(63,185,80,0.1)' },
-    answerWrong: { borderColor: colors.danger, backgroundColor: 'rgba(248,81,73,0.1)' },
-    checkbox: {
-      width: 22, height: 22, borderRadius: 4,
-      borderWidth: 2, borderColor: colors.border,
-      marginRight: 12, alignItems: 'center', justifyContent: 'center',
-    },
+    pointsBadge: { alignSelf: 'flex-start', backgroundColor: colors.primary, borderRadius: 20, paddingHorizontal: 10, paddingVertical: 4, marginBottom: 20 },
+    answerBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: colors.card, borderRadius: 12, borderWidth: 2, borderColor: colors.border, padding: 14, marginBottom: 10 },
+    answerSelected: { borderColor: colors.primary, backgroundColor: colors.primary + '15' },
+    checkbox: { width: 22, height: 22, borderRadius: 4, borderWidth: 2, borderColor: colors.border, marginRight: 12, alignItems: 'center', justifyContent: 'center' },
     checkboxSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
     answerText: { flex: 1, fontSize: 14, color: colors.text, lineHeight: 20 },
     navRow: { flexDirection: 'row', gap: 10, padding: 16, borderTopWidth: 1, borderTopColor: colors.border },
     navBtn: { flex: 1, padding: 14, borderRadius: 12, alignItems: 'center' },
     navBtnPrimary: { backgroundColor: colors.primary },
     navBtnSecondary: { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border },
-
-    // Results
     resultContainer: { flex: 1, padding: 24, alignItems: 'center', justifyContent: 'center' },
     resultIcon: { fontSize: 72, marginBottom: 16 },
     resultTitle: { fontSize: 28, fontWeight: '900', color: colors.text, marginBottom: 8 },
     resultScore: { fontSize: 48, fontWeight: '900', color: colors.primary, marginBottom: 4 },
-    resultSub: { fontSize: 16, color: colors.textSecondary, marginBottom: 32 },
-    resultPassedBadge: {
-      paddingHorizontal: 20, paddingVertical: 10, borderRadius: 30,
-      marginBottom: 32,
-    },
-    resultPassedText: { fontSize: 16, fontWeight: '800' },
-    restartBtn: {
-      backgroundColor: colors.primary, borderRadius: 16,
-      padding: 16, width: '100%', alignItems: 'center', marginBottom: 12,
-    },
-    homeBtn: {
-      backgroundColor: colors.card, borderRadius: 16,
-      padding: 16, width: '100%', alignItems: 'center',
-      borderWidth: 1, borderColor: colors.border,
-    },
+    resultSub: { fontSize: 16, color: colors.textSecondary, marginBottom: 24 },
+    resultBtn: { borderRadius: 16, padding: 16, width: '100%', alignItems: 'center', marginBottom: 12 },
   });
+
+  if (loading) {
+    return (
+      <SafeAreaView style={[s.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text style={{ color: colors.textSecondary, marginTop: 16 }}>Fragen werden geladen...</Text>
+      </SafeAreaView>
+    );
+  }
 
   if (finished && results) {
     return (
@@ -116,60 +90,46 @@ export default function ExamSessionScreen({ navigation }: any) {
           <Text style={s.resultTitle}>{results.passed ? 'Bestanden!' : 'Nicht bestanden'}</Text>
           <Text style={s.resultScore}>{results.percentage}%</Text>
           <Text style={s.resultSub}>{results.score} / {results.maxScore} Punkte</Text>
-          <View style={[s.resultPassedBadge, {
-            backgroundColor: results.passed ? 'rgba(63,185,80,0.15)' : 'rgba(248,81,73,0.15)',
-          }]}>
-            <Text style={[s.resultPassedText, { color: results.passed ? colors.success : colors.danger }]}>
+          <View style={[s.resultBtn, { backgroundColor: results.passed ? colors.success + '20' : colors.danger + '20', borderWidth: 1, borderColor: results.passed ? colors.success : colors.danger }]}>
+            <Text style={{ color: results.passed ? colors.success : colors.danger, fontWeight: '800', fontSize: 15 }}>
               {results.passed ? '✓ Max. 10 Fehlerpunkte' : '✗ Mehr als 10 Fehlerpunkte'}
             </Text>
           </View>
-          <TouchableOpacity style={s.restartBtn} onPress={() => {
-            setCurrent(0);
-            setSelectedAnswers({});
-            setFinished(false);
-            setResults(null);
-          }}>
-            <Text style={{ fontSize: 16, fontWeight: '800', color: '#000' }}>Nochmal versuchen</Text>
+          <TouchableOpacity style={[s.resultBtn, { backgroundColor: colors.primary }]} onPress={() => { setCurrent(0); setSelectedAnswers({}); setFinished(false); setResults(null); }}>
+            <Text style={{ color: '#000', fontWeight: '800', fontSize: 16 }}>Nochmal versuchen</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={s.homeBtn} onPress={() => navigation.goBack()}>
-            <Text style={{ fontSize: 16, fontWeight: '700', color: colors.text }}>Zurück</Text>
+          <TouchableOpacity style={[s.resultBtn, { backgroundColor: colors.card, borderWidth: 1, borderColor: colors.border }]} onPress={() => navigation.goBack()}>
+            <Text style={{ color: colors.text, fontWeight: '700', fontSize: 16 }}>Zurück</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>
     );
   }
 
+  if (!question) return null;
+
   return (
     <SafeAreaView style={s.container}>
       <View style={s.header}>
-        <TouchableOpacity onPress={() => navigation.goBack()}>
-          <Text style={s.closeBtn}>✕</Text>
-        </TouchableOpacity>
+        <TouchableOpacity onPress={() => navigation.goBack()}><Text style={s.closeBtn}>✕</Text></TouchableOpacity>
         <View style={s.headerInfo}>
-          <Text style={s.headerTitle}>Prüfungssimulation</Text>
+          <Text style={s.headerTitle}>Prüfungssimulation · {questions.length} Fragen</Text>
           <Text style={s.progressText}>Frage {current + 1} von {questions.length}</Text>
         </View>
       </View>
       <View style={s.progressBar}>
         <View style={[s.progressFill, { width: `${((current + 1) / questions.length) * 100}%` }]} />
       </View>
-
       <ScrollView style={s.scroll}>
-        <Text style={s.questionNum}>FRAGE {current + 1}</Text>
+        <Text style={s.questionNum}>FRAGE {current + 1} · {question.topic.toUpperCase()}</Text>
         <Text style={s.questionText}>{t(question.question)}</Text>
         <View style={s.pointsBadge}>
           <Text style={{ fontSize: 12, fontWeight: '800', color: '#000' }}>{question.points} Punkte</Text>
         </View>
-
         {question.answers.map((ans, i) => {
           const isSelected = chosen.includes(i);
           return (
-            <TouchableOpacity
-              key={i}
-              style={[s.answerBtn, isSelected && s.answerSelected]}
-              onPress={() => toggleAnswer(i)}
-              activeOpacity={0.8}
-            >
+            <TouchableOpacity key={i} style={[s.answerBtn, isSelected && s.answerSelected]} onPress={() => toggleAnswer(i)} activeOpacity={0.8}>
               <View style={[s.checkbox, isSelected && s.checkboxSelected]}>
                 {isSelected && <Text style={{ color: '#000', fontWeight: '900', fontSize: 14 }}>✓</Text>}
               </View>
@@ -179,7 +139,6 @@ export default function ExamSessionScreen({ navigation }: any) {
         })}
         <View style={{ height: 40 }} />
       </ScrollView>
-
       <View style={s.navRow}>
         {current > 0 && (
           <TouchableOpacity style={[s.navBtn, s.navBtnSecondary]} onPress={() => setCurrent(current - 1)}>
