@@ -31,7 +31,11 @@ export interface ParsedQuestion {
 }
 
 function parseApiQuestion(q: ApiQuestion): ParsedQuestion {
-  const rawAnswers: { de: string; en: string; correct: boolean }[] = JSON.parse(q.answers || '[]');
+  let rawAnswers: { de: string; en: string; correct: boolean }[] = [];
+  try {
+    const parsed = typeof q.answers === 'string' ? JSON.parse(q.answers || '[]') : q.answers;
+    rawAnswers = Array.isArray(parsed) ? parsed : [];
+  } catch { rawAnswers = []; }
   return {
     id: q.id,
     topic: q.topic,

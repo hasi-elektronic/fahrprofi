@@ -28,6 +28,16 @@ export default function MultipleChoiceScreen({ route, navigation }: any) {
 
   const q = questions[idx];
 
+  // Skip questions with no answers
+  React.useEffect(() => {
+    if (q && q.answers.length === 0 && !done) {
+      setTimeout(() => {
+        if (idx + 1 < questions.length) setIdx(i => i + 1);
+        else setDone(true);
+      }, 100);
+    }
+  }, [idx, q]);
+
   const handleAnswer = async (correct: boolean) => {
     if (!q) return;
     const gained = correct ? (q.points >= 4 ? XP_REWARDS.correct_hard : XP_REWARDS.correct_easy) : 0;
