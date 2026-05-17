@@ -125,6 +125,7 @@ export default function MultipleChoiceScreen({ route, navigation }: any) {
       </View>
       <ScrollView contentContainerStyle={{ padding: 16 }}>
         <VisualQuestionCard
+          key={q.id}
           question={qWithMeta}
           onAnswer={handleAnswer}
           onBookmark={toggleBookmark}
