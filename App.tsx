@@ -5,10 +5,8 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { Text } from 'react-native';
-
 import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { LanguageProvider } from './contexts/LanguageContext';
-
 import HomeScreen from './app/tabs/HomeScreen';
 import LearnScreen from './app/tabs/LearnScreen';
 import ExamScreen from './app/tabs/ExamScreen';
@@ -21,6 +19,8 @@ import ExamSessionScreen from './app/modals/ExamSessionScreen';
 import MultipleChoiceScreen from './app/modals/MultipleChoiceScreen';
 import SpeedRoundScreen from './app/modals/SpeedRoundScreen';
 import MemoryMatchScreen from './app/modals/MemoryMatchScreen';
+import PruefungsampelScreen from './app/modals/PruefungsampelScreen';
+import FragenlisteScreen from './app/modals/FragenlisteScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -28,19 +28,16 @@ const Stack = createNativeStackNavigator();
 function MainTabs() {
   const { colors } = useTheme();
   return (
-    <Tab.Navigator
-      screenOptions={({ route }) => ({
-        headerShown: false,
-        tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border, paddingBottom: 8, paddingTop: 6, height: 70 },
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textMuted,
-        tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginTop: 2 },
-        tabBarIcon: ({ focused }) => {
-          const icons: { [key: string]: string } = { Home: '🏠', Learn: '📚', Exam: '📝', Stats: '📊', Settings: '⚙️' };
-          return <Text style={{ fontSize: focused ? 22 : 18, opacity: focused ? 1 : 0.6 }}>{icons[route.name]}</Text>;
-        },
-      })}
-    >
+    <Tab.Navigator screenOptions={({ route }) => ({
+      headerShown: false,
+      tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border, paddingBottom: 8, paddingTop: 6, height: 70 },
+      tabBarActiveTintColor: colors.primary, tabBarInactiveTintColor: colors.textMuted,
+      tabBarLabelStyle: { fontSize: 11, fontWeight: '600', marginTop: 2 },
+      tabBarIcon: ({ focused }) => {
+        const icons: { [key: string]: string } = { Home: '🏠', Learn: '📚', Exam: '📝', Stats: '📊', Settings: '⚙️' };
+        return <Text style={{ fontSize: focused ? 22 : 18, opacity: focused ? 1 : 0.6 }}>{icons[route.name]}</Text>;
+      },
+    })}>
       <Tab.Screen name="Home" component={HomeScreen} options={{ tabBarLabel: 'Start' }} />
       <Tab.Screen name="Learn" component={LearnScreen} options={{ tabBarLabel: 'Lernen' }} />
       <Tab.Screen name="Exam" component={ExamScreen} options={{ tabBarLabel: 'Prüfung' }} />
@@ -64,6 +61,8 @@ function AppNavigator() {
         <Stack.Screen name="MultipleChoice" component={MultipleChoiceScreen} options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="SpeedRound" component={SpeedRoundScreen} options={{ animation: 'slide_from_bottom' }} />
         <Stack.Screen name="MemoryMatch" component={MemoryMatchScreen} options={{ animation: 'slide_from_bottom' }} />
+        <Stack.Screen name="Pruefungsampel" component={PruefungsampelScreen} />
+        <Stack.Screen name="Fragenliste" component={FragenlisteScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -72,11 +71,7 @@ function AppNavigator() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <ThemeProvider>
-        <LanguageProvider>
-          <AppNavigator />
-        </LanguageProvider>
-      </ThemeProvider>
+      <ThemeProvider><LanguageProvider><AppNavigator /></LanguageProvider></ThemeProvider>
     </SafeAreaProvider>
   );
 }
