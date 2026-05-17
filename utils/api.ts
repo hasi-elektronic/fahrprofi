@@ -15,6 +15,7 @@ export interface ApiQuestion {
   answers: string; // JSON string
   explanation_de: string;
   has_image: number;
+  image_url: string; // Google Cloud image URL
 }
 
 export interface ParsedQuestion {
@@ -26,6 +27,7 @@ export interface ParsedQuestion {
   answers: { text: { [key in Language]?: string }; correct: boolean }[];
   explanation?: { [key in Language]?: string };
   hasImage: boolean;
+  imageUrl?: string; // real image URL from Google Cloud
 }
 
 function parseApiQuestion(q: ApiQuestion): ParsedQuestion {
@@ -54,6 +56,7 @@ function parseApiQuestion(q: ApiQuestion): ParsedQuestion {
     })),
     explanation: q.explanation_de ? { de: q.explanation_de } : undefined,
     hasImage: q.has_image === 1,
+    imageUrl: q.image_url && q.image_url.length > 0 ? q.image_url : undefined,
   };
 }
 

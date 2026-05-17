@@ -106,7 +106,6 @@ export default function MultipleChoiceScreen({ route, navigation }: any) {
 
   const qWithMeta = {
     ...q,
-    imageUrl: (q as any).image_url || undefined,
     ampel: getAmpel(q.id) as 0 | 1 | 2,
   };
 
