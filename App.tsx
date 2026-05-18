@@ -21,8 +21,7 @@ import TopicScreen          from './app/modals/TopicScreen';
 import PruefungsampelScreen from './app/modals/PruefungsampelScreen';
 import FragenlisteScreen    from './app/modals/FragenlisteScreen';
 import { SAMPLE_QUESTIONS } from './data/questions';
-import OnboardingScreen from './app/screens/OnboardingScreen';
-import { loadOnboarding } from './utils/onboarding';
+
 
 type TabId = 'home' | 'learn' | 'exam' | 'stats' | 'settings';
 
@@ -119,11 +118,7 @@ function TopBar({ tab, setTab, modalTitle, onBack }: {
 function AppContent() {
   const { colors } = useTheme();
   const [tab, setTab] = useState<TabId>('home');
-  const [onboarded, setOnboarded] = useState<boolean | null>(null);
 
-  React.useEffect(() => {
-    loadOnboarding().then(d => setOnboarded(d.completed));
-  }, []);
   const [stack, setStack] = useState<{ id: string; params?: any }[]>([]);
 
   const current = stack[stack.length - 1];
@@ -163,12 +158,6 @@ function AppContent() {
       case 'settings': return <SettingsScreen {...p} />;
     }
   };
-
-  if (onboarded === null) return null; // loading
-
-  if (!onboarded) {
-    return <OnboardingScreen onComplete={() => setOnboarded(true)} />;
-  }
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
